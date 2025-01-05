@@ -1,8 +1,8 @@
 import math
-from sqlalchemy import func
 from fastapi import HTTPException
 from models.expenses import Expenses
 from utils.db_operations import save_in_db
+from sqlalchemy import func, text
 
 
 def get_expenses(ident, _type, start_date, end_date, page, limit, db):
@@ -57,11 +57,16 @@ def get_expenses(ident, _type, start_date, end_date, page, limit, db):
 
 
 def create_expense_f(form, db):
+    if form.datetime:
+        dt = form.datetime
+    else:
+        dt = func.now() + text("INTERVAL 5 HOUR")
     new_item_db = Expenses(
         type=form.type,
         money=form.money,
         comment=form.comment,
         currency=form.currency,
+        datetime=dt
     )
     save_in_db(db, new_item_db)
 

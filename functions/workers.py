@@ -50,6 +50,7 @@ def update_worker_f(form, db):
         Workers.workdays: form.workdays,
         Workers.fixed: form.fixed,
         Workers.part: form.part,
+        Workers.balance: form.balance
     })
     db.commit()
 

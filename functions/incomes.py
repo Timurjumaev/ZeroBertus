@@ -1,5 +1,5 @@
 import math
-from sqlalchemy import func
+from sqlalchemy import func, text
 from fastapi import HTTPException
 from models.incomes import Incomes
 from utils.db_operations import save_in_db
@@ -57,12 +57,17 @@ def get_incomes(ident, _type, start_date, end_date, page, limit, db):
 
 
 def create_income_f(form, db):
+    if form.datetime:
+        dt = form.datetime
+    else:
+        dt = func.now() + text("INTERVAL 5 HOUR")
     new_item_db = Incomes(
         name=form.name,
         type=form.type,
         money=form.money,
         comment=form.comment,
         currency=form.currency,
+        datetime=dt
     )
     save_in_db(db, new_item_db)
 

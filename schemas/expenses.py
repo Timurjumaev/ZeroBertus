@@ -1,5 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class Type(str, Enum):
@@ -19,6 +20,7 @@ class CreateExpense(BaseModel):
     money: int
     comment: str
     currency: Currency
+    datetime: datetime
 
 
 

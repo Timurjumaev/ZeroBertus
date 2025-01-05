@@ -15,11 +15,11 @@ salaries_router = APIRouter(
 
 
 @salaries_router.get('/get')
-def get(ident: int = 0, worker_id: int = 0, _type: Type = None,  start_date: date = None,
+def get(ident: int = 0, _type: Type = None,  start_date: date = None,
         end_date: date = None, page: int = 1,
         limit: int = 25, db: Session = Depends(database),
         current_user: CreateUser = Depends(get_current_active_user)):
-    return get_salaries_f(ident, worker_id, _type, start_date, end_date, page, limit, db)
+    return get_salaries_f(ident, _type, start_date, end_date, page, limit, db)
 
 
 @salaries_router.post('/create')

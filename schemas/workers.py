@@ -38,6 +38,7 @@ class UpdateWorker(BaseModel):
     workdays: int
     fixed: int
     part: Part
+    balance: int
 
     @validator('name')
     def name_validate(cls, name, values):

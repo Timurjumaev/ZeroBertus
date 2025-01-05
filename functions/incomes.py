@@ -2,7 +2,7 @@ import math
 from sqlalchemy import func, text
 from fastapi import HTTPException
 from models.incomes import Incomes
-from utils.db_operations import save_in_db
+from utils.db_operations import save_in_db, get_in_db
 
 
 def get_incomes(ident, _type, start_date, end_date, page, limit, db):
@@ -70,6 +70,12 @@ def create_income_f(form, db):
         datetime=dt
     )
     save_in_db(db, new_item_db)
+
+
+def delete_income_f(ident, db):
+    get_in_db(db, Incomes, ident)
+    db.query(Incomes).filter(Incomes.id == ident).delete()
+    db.commit()
 
 
 

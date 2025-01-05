@@ -1,7 +1,7 @@
 import math
 from fastapi import HTTPException
 from models.expenses import Expenses
-from utils.db_operations import save_in_db
+from utils.db_operations import save_in_db, get_in_db
 from sqlalchemy import func, text
 
 
@@ -69,6 +69,13 @@ def create_expense_f(form, db):
         datetime=dt
     )
     save_in_db(db, new_item_db)
+
+
+def delete_expense_f(ident, db):
+    get_in_db(db, Expenses, ident)
+    db.query(Expenses).filter(Expenses.id == ident).delete()
+    db.commit()
+
 
 
 

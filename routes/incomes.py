@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from functions.incomes import get_incomes, create_income_f
+from functions.incomes import get_incomes, create_income_f, delete_income_f
 from schemas.incomes import CreateIncome, Type
 from datetime import date
 from routes.login import get_current_active_user
@@ -26,4 +26,11 @@ def get(ident: int = 0, _type: Type = None, start_date: date = None,
 def create_income(form: CreateIncome, db: Session = Depends(database),
                   current_user: CreateUser = Depends(get_current_active_user)):
     create_income_f(form, db)
+    raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")
+
+
+@incomes_router.delete('/delete')
+def delete_income(ident: int, db: Session = Depends(database),
+                  current_user: CreateUser = Depends(get_current_active_user)):
+    delete_income_f(ident, db)
     raise HTTPException(status_code=200, detail="Amaliyot muvaffaqiyatli amalga oshirildi")

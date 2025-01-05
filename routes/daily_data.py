@@ -17,7 +17,8 @@ daily_data_router = APIRouter(
 
 @daily_data_router.get("/all-data/")
 def get_all_data(
-    current_date: str = Query(None, description="Filter by date in 'YYYY-MM-DD' format"),
+    start_date: str = Query(None, description="Filter by date in 'YYYY-MM-DD' format"),
+    end_date: str = Query(None, description="Filter by date in 'YYYY-MM-DD' format"),
     db: Session = Depends(database),
     current_user: CreateUser = Depends(get_current_active_user)
 ):
@@ -67,7 +68,8 @@ def get_all_data(
         return data
 
     # Filtr uchun datetime ustunini date formatiga o'girish
-    date_filter = func.date(Incomes.datetime) == current_date if current_date else True
+    start_date_filter = func.date(Incomes.datetime) >= start_date if start_date else True
+    end_date_filter = func.date(Incomes.datetime) < end_date if end_date else True
 
     # Incomes uchun
     incomes_query = db.query(
@@ -78,11 +80,12 @@ def get_all_data(
         Incomes.datetime,
         Incomes.comment,
         Incomes.name
-    ).filter(date_filter).group_by(Incomes.id, Incomes.type, Incomes.currency, Incomes.datetime, Incomes.comment, Incomes.name).all()
+    ).filter(start_date_filter, end_date_filter).group_by(Incomes.id, Incomes.type, Incomes.currency, Incomes.datetime, Incomes.comment, Incomes.name).all()
     incomes_data = process_table(incomes_query, "incomes")
 
     # Expenses uchun
-    date_filter = func.date(Expenses.datetime) == current_date if current_date else True
+    start_date_filter = func.date(Expenses.datetime) >= start_date if start_date else True
+    end_date_filter = func.date(Expenses.datetime) < end_date if end_date else True
     expenses_query = db.query(
         Expenses.id,
         Expenses.type,
@@ -90,11 +93,12 @@ def get_all_data(
         Expenses.currency,
         Expenses.datetime,
         Expenses.comment
-    ).filter(date_filter).group_by(Expenses.id, Expenses.type, Expenses.currency, Expenses.datetime, Expenses.comment).all()
+    ).filter(start_date_filter, end_date_filter).group_by(Expenses.id, Expenses.type, Expenses.currency, Expenses.datetime, Expenses.comment).all()
     expenses_data = process_table(expenses_query, "expenses")
 
     # Salaries uchun
-    date_filter = func.date(Salaries.datetime) == current_date if current_date else True
+    start_date_filter = func.date(Salaries.datetime) >= start_date if start_date else True
+    end_date_filter = func.date(Salaries.datetime) < end_date if end_date else True
     salaries_query = db.query(
         Salaries.id,
         Salaries.type,
@@ -103,7 +107,7 @@ def get_all_data(
         Salaries.datetime,
         Salaries.comment,
         Workers.name.label("worker_name")
-    ).join(Workers, Workers.id == Salaries.worker_id).filter(Salaries.type == "advance", date_filter).group_by(
+    ).join(Workers, Workers.id == Salaries.worker_id).filter(Salaries.type == "advance", start_date_filter, end_date_filter).group_by(
         Salaries.id, Salaries.type, Salaries.currency, Salaries.datetime, Salaries.comment, Workers.name
     ).all()
     salaries_data = process_table(salaries_query, "salaries", include_worker_name=True)

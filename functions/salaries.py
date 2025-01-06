@@ -212,3 +212,9 @@ def create_salary_f(form, db):
         db.commit()
 
 
+def delete_salary_f(ident, db):
+    get_in_db(db, Salaries, ident)
+    db.query(Salaries).filter(Salaries.id == ident).delete()
+    db.commit()
+
+

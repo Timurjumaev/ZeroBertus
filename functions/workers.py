@@ -1,11 +1,19 @@
-from sqlalchemy.orm import joinedload
-from utils.db_operations import save_in_db, get_in_db
-from models.workers import Workers
-from utils.pagination import pagination
+import math
 from fastapi import HTTPException
+from sqlalchemy.orm import joinedload
+from models.workers import Workers
+from models.attendances import Attendances
+from utils.db_operations import save_in_db, get_in_db
+from sqlalchemy import func
+from datetime import datetime
 
 
 def get_workers(ident, search, part, page, limit, db):
+    if page < 0 or limit < 0:
+        raise HTTPException(status_code=400, detail="page yoki limit 0 dan kichik kiritilmasligi kerak")
+    # Bugungi sanani olish
+    current_year = datetime.now().year
+    current_month = datetime.now().month
 
     if ident > 0:
         ident_filter = Workers.id == ident
@@ -23,12 +31,24 @@ def get_workers(ident, search, part, page, limit, db):
     else:
         part_filter = Workers.id > 0
 
-    items = db.query(Workers).options(joinedload(Workers.attendances),
-                                      joinedload(Workers.salaries),
-                                      joinedload(Workers.loans))\
-        .filter(ident_filter, search_filter, part_filter).order_by(Workers.name)
+    # Workerlarni olish va sanalar bo'yicha filtr
+    items = db.query(Workers).options(
+        joinedload(Workers.attendances)
+    ).filter(ident_filter, search_filter, part_filter).order_by(Workers.name)
 
-    return pagination(items, page, limit)
+    # Bugungi yil va oyda qancha davomat borligini hisoblash
+    attendance_count = db.query(func.count(Attendances.id))\
+        .join(Workers).filter(
+            ident_filter, search_filter, part_filter,
+            func.extract('year', Attendances.date) == current_year,
+            func.extract('month', Attendances.date) == current_month
+        ).scalar()
+
+    if page and limit:
+        return {"attendance_count": attendance_count, "current_page": page, "limit": limit, "pages": math.ceil(items.count() / limit),
+                "data": items.offset((page - 1) * limit).limit(limit).all()}
+    else:
+        return {"data": items.all()}
 
 
 def create_worker_f(form, db):

@@ -8,6 +8,7 @@ from models.workers import Workers
 from models.attendances import Attendances
 from routes.login import get_current_active_user
 from schemas.users import CreateUser
+from sqlalchemy.sql import func
 
 attendances_router = APIRouter(
     prefix="/attendances",
@@ -46,16 +47,19 @@ async def import_attendance(file: UploadFile = File(...), db: Session = Depends(
         'early_leave', 'absence', 'leave', 'status', 'records'
     ]
 
+    data = data.dropna(subset=['name'])
+
     # Yangi ustun nomlarini ko'rsatish uchun chop etish
-    print(data.columns)
-    print(data.head())
+    # print(data.columns)
+    # print(data.head())
 
     # Qatorlarni qayta ishlash
     for index, row in data.iterrows():
-        worker_name = row.get('name')
+        worker_name = str(row.get('name'))
 
         # Mavjud xodimni izlash yoki xato qaytarish
-        worker = db.query(Workers).filter(Workers.name == worker_name).first()
+        worker = db.query(Workers).filter(func.trim(Workers.name) == worker_name.strip()).first()
+
         if worker is None:
             raise HTTPException(status_code=400, detail=f"Kechirasiz, {worker_name} ismli ishchi topilmadi")
 
@@ -99,7 +103,7 @@ async def import_attendance(file: UploadFile = File(...), db: Session = Depends(
         db.refresh(attendance)
         money_for_one_day = worker.fixed / worker.workdays
         if attendance.came_datetime:
-            db.query(Workers).filter(Workers.name == worker_name).update({
+            db.query(Workers).filter(func.trim(Workers.name) == worker_name.strip()).update({
                 Workers.balance: Workers.balance + money_for_one_day
             })
             db.commit()

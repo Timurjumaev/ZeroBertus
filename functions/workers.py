@@ -33,7 +33,9 @@ def get_workers(ident, search, part, page, limit, db):
 
     # Workerlarni olish va sanalar bo'yicha filtr
     items = db.query(Workers).options(
-        joinedload(Workers.attendances)
+        joinedload(Workers.attendances),
+        joinedload(Workers.loans),
+        joinedload(Workers.salaries),
     ).filter(ident_filter, search_filter, part_filter).order_by(Workers.name)
 
     # Bugungi yil va oyda qancha davomat borligini hisoblash

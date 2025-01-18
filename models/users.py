@@ -1,5 +1,6 @@
 from db import Base
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, DateTime
+from datetime import datetime
 
 
 class Users(Base):
@@ -8,4 +9,6 @@ class Users(Base):
     username = Column(String(255), nullable=False)
     password = Column(String(255), nullable=False)
     role = Column(String(255), nullable=False)
-    token = Column(String(255), nullable=True)
+    access_token = Column(String(255), nullable=True)  # Foydalanuvchi uchun access_token
+    refresh_token = Column(String(255), nullable=True)  # Foydalanuvchi uchun refresh_token
+    last_login = Column(DateTime, default=datetime.utcnow)  # Oxirgi login vaqti (opsional)

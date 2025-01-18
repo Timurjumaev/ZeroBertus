@@ -15,11 +15,11 @@ expenses_router = APIRouter(
 
 
 @expenses_router.get('/get')
-def get(ident: int = 0, _type: Type = None,  start_date: date = None,
+def get(ident: int = 0, search: str = None, _type: Type = None,  start_date: date = None,
         end_date: date = None, page: int = 1,
         limit: int = 25, db: Session = Depends(database),
         current_user: CreateUser = Depends(get_current_active_user)):
-    return get_expenses(ident, _type, start_date, end_date, page, limit, db)
+    return get_expenses(ident, search, _type, start_date, end_date, page, limit, db)
 
 
 @expenses_router.post('/create')

@@ -5,12 +5,18 @@ from models.incomes import Incomes
 from utils.db_operations import save_in_db, get_in_db
 
 
-def get_incomes(ident, _type, start_date, end_date, page, limit, db):
+def get_incomes(ident, search, _type, start_date, end_date, page, limit, db):
 
     if ident > 0:
         ident_filter = Incomes.id == ident
     else:
         ident_filter = Incomes.id > 0
+
+    if search:
+        search_formatted = "%{}%".format(search)
+        search_filter = Incomes.name.like(search_formatted)
+    else:
+        search_filter = Incomes.id > 0
 
     if _type:
         type_filter = Incomes.type == _type
@@ -27,7 +33,7 @@ def get_incomes(ident, _type, start_date, end_date, page, limit, db):
     else:
         end_date_filter = Incomes.id > 0
 
-    form = (db.query(Incomes).filter(ident_filter, type_filter, start_date_filter, end_date_filter)
+    form = (db.query(Incomes).filter(ident_filter, search_filter, type_filter, start_date_filter, end_date_filter)
             .order_by(Incomes.id.desc()))
 
     _total_sum = db.query(func.sum(Incomes.money)).filter(Incomes.currency == "sum",

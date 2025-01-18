@@ -5,12 +5,18 @@ from utils.db_operations import save_in_db, get_in_db
 from sqlalchemy import func, text
 
 
-def get_expenses(ident, _type, start_date, end_date, page, limit, db):
+def get_expenses(ident, search, _type, start_date, end_date, page, limit, db):
 
     if ident > 0:
         ident_filter = Expenses.id == ident
     else:
         ident_filter = Expenses.id > 0
+
+    if search:
+        search_formatted = "%{}%".format(search)
+        search_filter = Expenses.comment.like(search_formatted)
+    else:
+        search_filter = Expenses.id > 0
 
     if _type:
         type_filter = Expenses.type == _type
@@ -27,7 +33,7 @@ def get_expenses(ident, _type, start_date, end_date, page, limit, db):
     else:
         end_date_filter = Expenses.id > 0
 
-    form = (db.query(Expenses).filter(ident_filter, type_filter, start_date_filter, end_date_filter)
+    form = (db.query(Expenses).filter(ident_filter, search_filter, type_filter, start_date_filter, end_date_filter)
             .order_by(Expenses.id.desc()))
 
     _total_sum = db.query(func.sum(Expenses.money)).filter(Expenses.currency == "sum",

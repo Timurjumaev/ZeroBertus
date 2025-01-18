@@ -9,13 +9,10 @@ from db import database
 from models.users import Users
 from schemas.tokens import Token
 
-# Session initialization
-session = Session()
-
 # Security configurations
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 1
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -95,18 +92,24 @@ def login_for_access_token(db: Session = Depends(database), form_data: OAuth2Pas
         data={"sub": user.username}, expires_delta=refresh_token_expires, token_type="refresh"
     )
 
+    # Tokenlarni foydalanuvchining jadvaliga yozib qo'yamiz
+    user.access_token = access_token
+    user.refresh_token = refresh_token
+    user.last_login = datetime.utcnow()  # Oxirgi login vaqtini yangilash (opsional)
+    db.commit()  # O'zgarishlarni saqlash
+
     return {
         "id": user.id,
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "access_token_expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Sekundlarda
-        "refresh_token_expires_in": REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # Sekundlarda
-}
+        "access_token_expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "refresh_token_expires_in": REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    }
 
 
 @login_router.post("/refresh_token", response_model=Token)
-def refresh_access_token(db: Session = Depends(database), refresh_token: str = Depends(oauth2_scheme)):
+def refresh_access_token(db: Session = Depends(database), refresh_token: str = ""):
     payload = decode_token(refresh_token, "refresh")
     username: Optional[str] = payload.get("sub")
     if username is None:
@@ -115,16 +118,21 @@ def refresh_access_token(db: Session = Depends(database), refresh_token: str = D
             detail="Invalid refresh token"
         )
     user = db.query(Users).filter(Users.username == username).first()
-    if user is None:
+    if user is None or user.refresh_token != refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
+            detail="User not found or invalid refresh token"
         )
 
+    # Yangi access token yaratamiz
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_token(
         data={"sub": user.username}, expires_delta=access_token_expires, token_type="access"
     )
+
+    # Access tokenni foydalanuvchi jadvaliga yozib qo'yamiz
+    user.access_token = access_token
+    db.commit()
 
     return {
         "access_token": access_token,

@@ -41,6 +41,7 @@ def get_workers(ident, search, part, page, limit, db):
     # Bugungi yil va oyda qancha davomat borligini hisoblash
     attendance_count = db.query(func.count(Attendances.id))\
         .join(Workers).filter(
+            Attendances.came_datetime.isnot(None),
             ident_filter, search_filter, part_filter,
             func.extract('year', Attendances.date) == current_year,
             func.extract('month', Attendances.date) == current_month
